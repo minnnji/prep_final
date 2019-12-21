@@ -52,6 +52,7 @@
   // iterator function over each item in the input collection.
   
   _.each = function(collection, iterator) {
+    //각 요소에 iteratee를 적용한 결과를 리턴한다.
     if(Array.isArray(collection)) {
       for(var i = 0; i < collection.length; i++) {
         iterator(collection[i], i, collection);
@@ -83,36 +84,64 @@
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
     var result = [];
-      _.each(collection, function(item) {
-        if (test(item)) {
-          result.push(item);
-        }
-      });
+    _.each(collection, function(item) {
+      if (test(item)) {
+        result.push(item);
+      }
+    });
       
-      return result;
+    return result;
   };
-
-var isEven = function(num) { return num % 2 === 0; };
-var evens = _.filter([1, 2, 3, 4, 5, 6], isEven);
-expect(evens).to.eql([2, 4, 6]);
-
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
+    var result = [];
+    _.each(collection, function(item) {
+      if (test(item) === false) {
+        result.push(item);
+      }
+    });
+
+    return result;
   };
 
   // Produce a duplicate-free version of the array.
-  _.uniq = function(array) {
-  };
+  // _.uniq = function(array) {
+  //   var result = [];
+  //   for (var i = 0; i < array.length; i++) {
+  //     if(_.indexOf(result, array[i]) === -1) {
+  //       result.push(array[i]);
+  //     };
+  //   };
+    
+  //   return result;
+  // };
 
+  _.uniq = function(array) {
+    var result = [];
+    _.each(array, function(item) {
+      if(_.indexOf(result, item) === -1) {
+        result.push(item);
+      };
+    });
+
+    return result;
+  };
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+    //each랑 비슷, 새로운 배열 만든다
+    var result = [];
+    _.each(collection, function(item) {
+      result.push(iterator(item))
+    });
+
+    return result;
   };
 
   /*
@@ -154,7 +183,76 @@ expect(evens).to.eql([2, 4, 6]);
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
-  };
+    //collection으로부터 하나의 결과를 낸다
+
+    // if(accumulator === undefined) {
+    //   accumulator = collection[0];
+    //   for(var i = 0; i < collection.length - 1; i++) {
+    //   accumulator = iterator(accumulator, collection[i+1]);
+    //   }
+    //   } else {
+    //   for(var j = 0; j < collection.length; j++) {
+    //   accumulator = iterator(accumulator, collection[j]); >> 객체일때 처리가 안되는
+    //   }
+    //   }
+    //   return accumulator;
+    //   };
+  
+  // _.each(collection, function(item, index) {
+  //   if(accumulator !== undefined) {
+  //       accumulator = iterator(accumulator, item);
+  //   } else {
+  //     if(Array.isArray(collection)) {
+  //       accumulator = collection[0];
+  //     } else {
+  //       accumulator = Object.values(collection)[0];
+  //     }
+  //     accumulator = iterator(accumulator, item);  >> 두번째 아이템부터 들어와야함.. 
+  //   }
+  // });
+  // return accumulator;
+
+  // if(accumulator !== undefined) {
+  //   for(var i = 0; i < collection.length; i++) {
+  //     accumulator = iterator(accumulator, collection[i])
+  //   };
+  // } else {
+  //     if(Array.isArray(collection)) {
+  //       accumulator = collection[0];
+  //       for(var j = 1; j < collection.length; j++) {
+  //         accumulator = iterator(accumulator, collection[j])
+  //       }
+  //     } else {
+  //       accumulator = Object.values(collection)[0];
+  //       for(var j = 1; j < Object.keys(collection).length; j++) {
+  //         accumulator = iterator(accumulator, Object.values(collection)[j])
+  //       };
+  //     };
+  //   };
+    
+  // return accumulator;
+  // };
+
+  if(Array.isArray(collection)) {
+    if(accumulator !== undefined) {
+      for(var i = 0; i < collection.length; i++) {
+      accumulator = iterator(accumulator, collection[i])
+      };
+      return accumulator;
+    } else {
+      accumulator = collection[0];
+        for(var j = 1; j < collection.length; j++) {
+        accumulator = iterator(accumulator, collection[j])
+      };
+      return accumulator;
+    }
+  } else {
+    for(var k in collection){
+      accumulator = iterator(accumulator, collection[k]);
+    }
+    return accumulator;
+  }
+};
 
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
@@ -166,20 +264,39 @@ expect(evens).to.eql([2, 4, 6]);
       }
       return item === target;
     }, false);
-  };
-
+  };  
 
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
-    // TIP: Try re-using reduce() here.
+    //TIP: Try re-using reduce() here.
+    if(iterator === undefined) {
+      return collection[collection.length-1];
+    } else {
+      return _.reduce(collection, function(pass, item) {
+        if (!pass) {
+          return false;
+        } else if (iterator(item)) {
+          return true;
+        } else return false;
+      }, true);
+    }
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if(iterator === undefined) {
+      return _.contains(collection, true);
+    }
+    return _.reduce(collection, function(pass, item) {
+      if (pass) {
+        return true;
+      } else if (iterator(item)) {
+        return true;
+      } else return false;
+    }, false);
   };
-
 
   /**
    * OBJECTS
@@ -200,11 +317,25 @@ expect(evens).to.eql([2, 4, 6]);
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for(var i = 0; i < arguments.length; i++) {
+      for(var key in arguments[i]) {
+        obj[key] = arguments[i][key]
+      };
+    };
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for(var i = 0; i < arguments.length; i++) {
+      for(var key in arguments[i]) {
+        if(!obj.hasOwnProperty(key)) {
+          obj[key] = arguments[i][key]
+        };
+      };
+    };
+    return obj;
   };
 
 
